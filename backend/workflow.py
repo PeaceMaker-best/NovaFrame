@@ -1040,6 +1040,8 @@ class WorkflowRunner:
         }
         env.update(
             {
+                "PYTHONIOENCODING": "utf-8",
+                "PYTHONUTF8": "1",
                 "PYTHONUNBUFFERED": "1",
                 "MUSEFORGE_WORKSPACE_ROOT": str(execution_bundle["workspace"]),
                 "MUSEFORGE_RUN_ID": job_id,
@@ -1084,7 +1086,7 @@ class WorkflowRunner:
 
             reader = threading.Thread(
                 target=read_stdout,
-                name=f"museforge-output-{job_id}",
+                name=f"novaframe-output-{job_id}",
                 daemon=True,
             )
             reader.start()

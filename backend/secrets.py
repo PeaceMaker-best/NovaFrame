@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
+from subprocess import run as run_process
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -32,7 +34,7 @@ class SecretCipher:
             )
         except FileExistsError:
             key = self.key_path.read_bytes().strip()
-            os.chmod(self.key_path, 0o600)
+            self._restrict_key_permissions()
             # Fernet validates the exact key format when it is constructed.
             return key
         key = Fernet.generate_key()
@@ -44,7 +46,44 @@ class SecretCipher:
         except Exception:
             self.key_path.unlink(missing_ok=True)
             raise
+        self._restrict_key_permissions()
         return key
+
+    def _restrict_key_permissions(self) -> None:
+        if os.name != "nt":
+            os.chmod(self.key_path, 0o600)
+            return
+
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        account_result = run_process(
+            ["whoami"],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=False,
+            creationflags=flags,
+        )
+        account = account_result.stdout.strip()
+        if account_result.returncode != 0 or not account:
+            raise RuntimeError("Unable to identify the Windows account for key protection")
+
+        acl_result = run_process(
+            [
+                "icacls",
+                str(self.key_path),
+                "/inheritance:r",
+                "/grant:r",
+                f"{account}:(R,W)",
+            ],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=False,
+            creationflags=flags,
+        )
+        if acl_result.returncode != 0:
+            detail = (acl_result.stdout or acl_result.stderr).strip()
+            raise RuntimeError(f"Unable to protect the Windows key file: {detail}")
 
     def encrypt(self, value: str) -> str:
         return self._fernet.encrypt(value.encode("utf-8")).decode("ascii")

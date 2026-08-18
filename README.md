@@ -102,12 +102,11 @@ The built-in e-commerce matrix covers:
 ### Install and run
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/PeaceMaker-best/NovaFrame.git
 cd NovaFrame
 
 npm install
-python3 -m venv .venv
-.venv/bin/python -m pip install -r backend/requirements.txt
+npm run setup:api
 
 npm run dev
 ```
@@ -152,11 +151,11 @@ The repository includes `MF-DEMO-001` as a small example workspace.
 The API safely wraps the bundled Skill, and the same preparation commands can be run directly:
 
 ```bash
-.venv/bin/python \
+npm run python -- \
   .agents/skills/generate-product-images/scripts/product_image_workflow.py \
   prepare --product "MF-DEMO-001" --refresh-prompts
 
-.venv/bin/python \
+npm run python -- \
   .agents/skills/generate-product-images/scripts/product_image_workflow.py \
   preview --product "MF-DEMO-001" --task "单品" --shot lifestyle-scene
 ```
@@ -239,7 +238,7 @@ npm run test:backend
 npm run verify
 
 # Skill staging tests
-PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
+npm run python -- -m pytest \
   .agents/skills/generate-product-images/scripts/test_staged_generation.py \
   -q -p no:cacheprovider
 ```

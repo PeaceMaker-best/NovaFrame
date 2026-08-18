@@ -28,7 +28,7 @@ Managed credentials are encrypted with Fernet before SQLite persistence. On firs
 backend/data/museforge.sqlite3.key
 ```
 
-The file is created with mode `0600` and ignored by Git. The key must be backed up together with the database; a database backup without its matching key cannot decrypt managed credentials.
+On POSIX systems the file is created with mode `0600`. On Windows, inherited ACLs are removed and read/write access is granted only to the current account. The file is ignored by Git and must be backed up together with the database; a database backup without its matching key cannot decrypt managed credentials.
 
 Credentials are never written to:
 

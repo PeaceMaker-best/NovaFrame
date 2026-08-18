@@ -48,11 +48,11 @@ The Skill preparation phase creates task and prompt baselines. Reference curatio
 ## 3. Prepare and preview
 
 ```bash
-.venv/bin/python \
+npm run python -- \
   .agents/skills/generate-product-images/scripts/product_image_workflow.py \
   prepare --product "MF-DEMO-001" --refresh-prompts
 
-.venv/bin/python \
+npm run python -- \
   .agents/skills/generate-product-images/scripts/product_image_workflow.py \
   preview --product "MF-DEMO-001" --task "单品" --shot lifestyle-scene
 ```
@@ -246,7 +246,7 @@ The browser URL carries the same context, so the exact canvas can be refreshed o
 ```bash
 npm run verify
 
-PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
+npm run python -- -m pytest \
   backend/tests \
   .agents/skills/generate-product-images/scripts/test_staged_generation.py \
   -q -p no:cacheprovider

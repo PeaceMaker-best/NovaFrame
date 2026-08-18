@@ -20,9 +20,7 @@ Runtime artifacts such as `.env`, `.venv`, `dist`, `workspace/.museforge/runs`, 
 
 ```bash
 npm install
-python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r backend/requirements.txt
+npm run setup:api
 ```
 
 Start both services:
@@ -91,7 +89,7 @@ npm run verify
 Full backend and Skill suite:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
+npm run python -- -m pytest \
   backend/tests \
   .agents/skills/generate-product-images/scripts/test_staged_generation.py \
   -q -p no:cacheprovider
@@ -158,7 +156,7 @@ Before committing:
 
 ```bash
 npm run verify
-PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest \
+npm run python -- -m pytest \
   .agents/skills/generate-product-images/scripts/test_staged_generation.py \
   -q -p no:cacheprovider
 git status --short

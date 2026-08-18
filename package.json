@@ -9,12 +9,14 @@
   "scripts": {
     "dev": "concurrently -k -n api,ui -c cyan,green \"npm:dev:api\" \"npm:dev:ui\"",
     "dev:ui": "vite --port 33020",
-    "dev:api": ".venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 38120",
+    "dev:api": "node scripts/python.mjs -m uvicorn backend.app.main:app --host 127.0.0.1 --port 38120",
+    "python": "node scripts/python.mjs",
+    "setup:api": "node scripts/python.mjs --bootstrap",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 33020",
     "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental false && tsc -p tsconfig.node.json --noEmit",
     "test:frontend": "node --test tests/*.test.mjs",
-    "test:backend": ".venv/bin/python -m pytest backend/tests -q",
+    "test:backend": "node scripts/python.mjs -m pytest backend/tests -q",
     "verify": "npm run typecheck && npm run build && npm run test:frontend && npm run test:backend"
   },
   "dependencies": {

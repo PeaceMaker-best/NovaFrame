@@ -1149,7 +1149,18 @@ def test_provider_registry_auto_routing_and_secret_redaction(tmp_path: Path) -> 
         ).fetchone()
         assert snapshot == ("渠道 B", 0.03)
     key_path = settings.database_path.with_suffix(settings.database_path.suffix + ".key")
-    assert key_path.stat().st_mode & 0o777 == 0o600
+    if os.name == "nt":
+        acl = subprocess.run(
+            ["icacls", str(key_path)],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=False,
+        )
+        assert acl.returncode == 0
+        assert "(I)" not in acl.stdout
+    else:
+        assert key_path.stat().st_mode & 0o777 == 0o600
 
 
 def test_legacy_database_is_migrated_without_losing_jobs(tmp_path: Path) -> None:

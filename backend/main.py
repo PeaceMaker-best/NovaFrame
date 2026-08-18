@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import fcntl
 import json
 import os
 import sqlite3
@@ -17,6 +16,7 @@ from urllib.parse import urlsplit
 from fastapi import BackgroundTasks, Body, FastAPI, HTTPException, Path, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from filelock import FileLock, Timeout
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -549,11 +549,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         instance_lock_path = resolved_settings.database_path.with_name(
             f"{resolved_settings.database_path.name}.instance.lock"
         )
-        instance_lock = instance_lock_path.open("a+", encoding="utf-8")
+        instance_lock = FileLock(str(instance_lock_path))
         try:
-            fcntl.flock(instance_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
-            instance_lock.close()
+            instance_lock.acquire(timeout=0)
+        except Timeout as exc:
             raise RuntimeError(
                 "Another NovaFrame API instance is already using this database"
             ) from exc
@@ -567,7 +566,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             provider_service = ProviderService(repository, secret_cipher)
             generation_executor = ThreadPoolExecutor(
-                max_workers=2, thread_name_prefix="museforge-generation"
+                max_workers=2, thread_name_prefix="novaframe-generation"
             )
             app.state.settings = resolved_settings
             app.state.repository = repository
@@ -582,8 +581,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             # This makes hot reload and graceful restart single-writer safe.
             if generation_executor is not None:
                 generation_executor.shutdown(wait=True, cancel_futures=False)
-            fcntl.flock(instance_lock.fileno(), fcntl.LOCK_UN)
-            instance_lock.close()
+            instance_lock.release()
 
     application = FastAPI(
         title="NovaFrame API",
@@ -609,7 +607,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         current: Settings = request.app.state.settings
         return {
             "status": "ok",
-            "service": "museforge-api",
+            "service": "novaframe-api",
             "version": application.version,
             "workspace_ready": current.workspace_root.is_dir(),
             "workflow_ready": current.workflow_script.is_file(),
