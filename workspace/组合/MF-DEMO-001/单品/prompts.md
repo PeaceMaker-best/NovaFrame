@@ -1,0 +1,258 @@
+1.
+```json
+{
+  "filename": "MF-DEMO-001-standalone-main",
+  "shot": "1:1 aspect ratio",
+  "subject": {
+    "item": "MF-DEMO-001, shown completely and matching all supplied references. It is the sole visual hero; preserve its verified count, dimensions, color, shape, material, and construction.",
+    "colors": "Match reference colors exactly with natural commercial color accuracy.",
+    "materials": "Show only materials and finishes supported by references or documentation.",
+    "action": "Show the complete product as the dominant centered subject on a clean bright background with honest scale and no visual clutter.",
+    "condition": "New, clean, complete, undamaged, correctly proportioned, and free from packaging clutter."
+  },
+  "combination_logic": "Standalone product image: communicate one clear commercial purpose while preserving the full product and all verified facts.",
+  "product_information": "Product identifier: MF-DEMO-001",
+  "reference_image_policy": "Treat every reference image as a product-identity constraint, never as a composition template. Preserve exact product shape, count, color, material, construction, visible parts, and relative scale. Do not copy the source background, crop, camera angle, tabletop, wall, lighting, props, or layout. Create an original composition appropriate to the requested image type and never invent parts or functions.",
+  "diversity_plan": {
+    "scene_domain": "neutral-commercial",
+    "space_type": "shot-specific controlled setting",
+    "use_context": "clean commercial hero image",
+    "camera_angle": "selected for the requested information type",
+    "composition_family": "distinct from the other four image types",
+    "daylight_direction": "bright diffused commercial daylight",
+    "emotional_tone": "clear, factual, trustworthy"
+  },
+  "interaction_plan": {
+    "interaction_mode": "not required for this shot",
+    "completed_state": "preserve complete, stable, physically credible product presentation"
+  },
+  "environment": "Bright, clean daytime environment appropriate to the verified product use; soft neutral background and restrained supporting props.",
+  "composition": "Stable square composition with the complete product fully inside frame, generous safe margins, no cropped edges, no overlap that hides included parts.",
+  "camera": {
+    "focal_length": "50-70mm equivalent",
+    "aperture": "f/8",
+    "angle": "clear three-quarter or straight-on product-readable angle"
+  },
+  "lighting": "Bright diffused daylight with soft commercial fill, accurate reflections, controlled highlights, and clearly separated edges.",
+  "color_grade": "Neutral, bright, realistic e-commerce grade with clean whites and restrained saturation.",
+  "style": "clean commercial hero image",
+  "quality": "High-resolution photorealistic e-commerce image, accurate geometry, legible information, crisp but natural materials.",
+  "negatives": "Bright daytime environment only. Show the complete product. No night, dusk, low light, children, people who appear underage, wall plugs, certification marks, voltage claims, wireless symbols, Bluetooth symbols, environmental claims, waterproof claims, brand logos, copyrighted characters, unrelated props, distorted geometry, invented functions, unreadable decorative text, Chinese text, or any visible non-English wording. Every visible word must use natural US English.",
+  "text": {
+    "Content": "US marketplace language policy: every visible headline, caption, dimension label, feature callout, comparison heading, icon label, and supporting word must be written in concise, natural US English. Never render Chinese source wording, bilingual text, pinyin, placeholder copy, garbled characters, or machine-like literal translations. Chinese product information is internal evidence only. Convert only verified facts into short idiomatic English labels; omit any fact that cannot be translated confidently. No headline is required; if a label is useful, use only a short neutral bundle label.",
+    "Position": "Use a quiet top or side information zone without covering either product.",
+    "font_style": "Clean sans-serif",
+    "font_color": "High-contrast neutral charcoal with one restrained accent color",
+    "font_size": "Large enough to read at marketplace thumbnail scale, with limited word count",
+    "Effects": "Thin guide lines and subtle solid backing only; no glow, dramatic shadow, badge, leaf icon, or certification-like symbol."
+  }
+}
+```
+
+2.
+```json
+{
+  "filename": "MF-DEMO-001-standalone-size",
+  "shot": "1:1 aspect ratio",
+  "subject": {
+    "item": "MF-DEMO-001, shown completely and matching all supplied references. It is the sole visual hero; preserve its verified count, dimensions, color, shape, material, and construction.",
+    "colors": "Match reference colors exactly with natural commercial color accuracy.",
+    "materials": "Show only materials and finishes supported by references or documentation.",
+    "action": "Show the complete product and use precise thin measurement lines. Include only dimensions supported by the supplied product information or reference image; never guess.",
+    "condition": "New, clean, complete, undamaged, correctly proportioned, and free from packaging clutter."
+  },
+  "combination_logic": "Standalone product image: communicate one clear commercial purpose while preserving the full product and all verified facts.",
+  "product_information": "Product identifier: MF-DEMO-001",
+  "reference_image_policy": "Treat every reference image as a product-identity constraint, never as a composition template. Preserve exact product shape, count, color, material, construction, visible parts, and relative scale. Do not copy the source background, crop, camera angle, tabletop, wall, lighting, props, or layout. Create an original composition appropriate to the requested image type and never invent parts or functions.",
+  "diversity_plan": {
+    "scene_domain": "neutral-commercial",
+    "space_type": "shot-specific controlled setting",
+    "use_context": "clear dimension infographic",
+    "camera_angle": "selected for the requested information type",
+    "composition_family": "distinct from the other four image types",
+    "daylight_direction": "bright diffused commercial daylight",
+    "emotional_tone": "clear, factual, trustworthy"
+  },
+  "interaction_plan": {
+    "interaction_mode": "not required for this shot",
+    "completed_state": "preserve complete, stable, physically credible product presentation"
+  },
+  "environment": "Bright, clean daytime environment appropriate to the verified product use; soft neutral background and restrained supporting props.",
+  "composition": "Stable square composition with the complete product fully inside frame, generous safe margins, no cropped edges, no overlap that hides included parts.",
+  "camera": {
+    "focal_length": "50-70mm equivalent",
+    "aperture": "f/8",
+    "angle": "clear three-quarter or straight-on product-readable angle"
+  },
+  "lighting": "Bright diffused daylight with soft commercial fill, accurate reflections, controlled highlights, and clearly separated edges.",
+  "color_grade": "Neutral, bright, realistic e-commerce grade with clean whites and restrained saturation.",
+  "style": "clear dimension infographic",
+  "quality": "High-resolution photorealistic e-commerce image, accurate geometry, legible information, crisp but natural materials.",
+  "negatives": "Bright daytime environment only. Show the complete product. No night, dusk, low light, children, people who appear underage, wall plugs, certification marks, voltage claims, wireless symbols, Bluetooth symbols, environmental claims, waterproof claims, brand logos, copyrighted characters, unrelated props, distorted geometry, invented functions, unreadable decorative text, Chinese text, or any visible non-English wording. Every visible word must use natural US English.",
+  "text": {
+    "Content": "US marketplace language policy: every visible headline, caption, dimension label, feature callout, comparison heading, icon label, and supporting word must be written in concise, natural US English. Never render Chinese source wording, bilingual text, pinyin, placeholder copy, garbled characters, or machine-like literal translations. Chinese product information is internal evidence only. Convert only verified facts into short idiomatic English labels; omit any fact that cannot be translated confidently. Use concise US English dimension labels such as Length, Width, Height, and Weight, followed by the exact supported values. Do not reproduce Chinese field names.",
+    "Position": "Use a quiet top or side information zone without covering either product.",
+    "font_style": "Clean sans-serif",
+    "font_color": "High-contrast neutral charcoal with one restrained accent color",
+    "font_size": "Large enough to read at marketplace thumbnail scale, with limited word count",
+    "Effects": "Thin guide lines and subtle solid backing only; no glow, dramatic shadow, badge, leaf icon, or certification-like symbol."
+  }
+}
+```
+
+3.
+```json
+{
+  "filename": "MF-DEMO-001-standalone-lifestyle-scene",
+  "shot": "1:1 aspect ratio",
+  "subject": {
+    "item": "MF-DEMO-001, shown completely and matching all supplied references. It is the sole visual hero; preserve its verified count, dimensions, color, shape, material, and construction.",
+    "colors": "Match reference colors exactly with natural commercial color accuracy.",
+    "materials": "Show only materials and finishes supported by references or documentation.",
+    "action": "Show the complete product naturally integrated into bright neutral commercial product setting during a factual product-readable presentation when use context is uncertain. Let the environment communicate the product category within a glance and translate verified features into visible sensory comfort, order, texture, or ease. Use straight-on spatial mid-shot. Keep the product clearly readable as the key to the experience without making it look pasted in or theatrically staged. Physical interaction is mandatory: show a complete, immediately understandable, real-world usable state; if the mechanism is unverified, use a neutral stable presentation. Support: a surface or support explicitly compatible with the supplied facts and visible product structure. Contact: show every required base, support, attachment, or contact point clearly and completely. Load logic: keep gravity, balance, support, and product orientation physically credible. Avoid: no floating, penetration, fake contact, unstable balance, hidden support, invented attachment, or treating a clamp, hook, cable, or decorative part as a base.",
+    "condition": "New, clean, complete, undamaged, correctly proportioned, and free from packaging clutter."
+  },
+  "combination_logic": "Standalone product image: communicate one clear commercial purpose while preserving the full product and all verified facts.",
+  "product_information": "Product identifier: MF-DEMO-001",
+  "reference_image_policy": "Treat every reference image as a product-identity constraint, never as a composition template. Preserve exact product shape, count, color, material, construction, visible parts, and relative scale. Do not copy the source background, crop, camera angle, tabletop, wall, lighting, props, or layout. Create an original composition appropriate to the requested image type and never invent parts or functions.",
+  "diversity_plan": {
+    "scene_domain": "neutral-commercial",
+    "space_type": "bright neutral commercial product setting",
+    "use_context": "a factual product-readable presentation when use context is uncertain",
+    "camera_angle": "straight-on spatial mid-shot",
+    "composition_family": "symmetrical framing around the complete product",
+    "daylight_direction": "even frontal daylight with restrained soft shadows",
+    "emotional_tone": "welcoming, practical, composed"
+  },
+  "interaction_plan": {
+    "interaction_mode": "verified use-state or stable product presentation",
+    "support_surface": "a surface or support explicitly compatible with the supplied facts and visible product structure",
+    "contact_points": "show every required base, support, attachment, or contact point clearly and completely",
+    "load_direction": "keep gravity, balance, support, and product orientation physically credible",
+    "completed_state": "show a complete, immediately understandable, real-world usable state; if the mechanism is unverified, use a neutral stable presentation",
+    "forbidden_state": "no floating, penetration, fake contact, unstable balance, hidden support, invented attachment, or treating a clamp, hook, cable, or decorative part as a base"
+  },
+  "environment": "Immersive but uncluttered bright neutral commercial product setting in bright daytime, expressing welcoming, practical, composed. Build a familiar, attainable slice of daily life with natural spatial depth, tactile material cues, and restrained lived-in details. The complete product remains immediately readable; no person is required, and the setting must never become dark, cinematic, or more visually important than the product.",
+  "composition": "symmetrical framing around the complete product; keep complete items inside frame with safe margins and no obstructive overlap.",
+  "camera": {
+    "focal_length": "50-70mm equivalent",
+    "aperture": "f/8",
+    "angle": "straight-on spatial mid-shot"
+  },
+  "lighting": "even frontal daylight with restrained soft shadows",
+  "color_grade": "Neutral, bright, realistic e-commerce grade with clean whites and restrained saturation.",
+  "style": "immersive bright-daytime lifestyle photography with low advertising noise and strong psychological ownership",
+  "quality": "High-resolution photorealistic e-commerce image, accurate geometry, legible information, crisp but natural materials.",
+  "negatives": "Bright daytime environment only. Show the complete product. No night, dusk, low light, children, people who appear underage, wall plugs, certification marks, voltage claims, wireless symbols, Bluetooth symbols, environmental claims, waterproof claims, brand logos, copyrighted characters, unrelated props, distorted geometry, invented functions, unreadable decorative text, Chinese text, or any visible non-English wording. Every visible word must use natural US English.",
+  "text": {
+    "Content": "US marketplace language policy: every visible headline, caption, dimension label, feature callout, comparison heading, icon label, and supporting word must be written in concise, natural US English. Never render Chinese source wording, bilingual text, pinyin, placeholder copy, garbled characters, or machine-like literal translations. Chinese product information is internal evidence only. Convert only verified facts into short idiomatic English labels; omit any fact that cannot be translated confidently. Use no text unless a tiny neutral label materially improves comprehension.",
+    "Position": "Use a quiet top or side information zone without covering either product.",
+    "font_style": "Clean sans-serif",
+    "font_color": "High-contrast neutral charcoal with one restrained accent color",
+    "font_size": "Large enough to read at marketplace thumbnail scale, with limited word count",
+    "Effects": "Thin guide lines and subtle solid backing only; no glow, dramatic shadow, badge, leaf icon, or certification-like symbol."
+  }
+}
+```
+
+4.
+```json
+{
+  "filename": "MF-DEMO-001-standalone-detail",
+  "shot": "1:1 aspect ratio",
+  "subject": {
+    "item": "MF-DEMO-001, shown completely and matching all supplied references. It is the sole visual hero; preserve its verified count, dimensions, color, shape, material, and construction.",
+    "colors": "Match reference colors exactly with natural commercial color accuracy.",
+    "materials": "Show only materials and finishes supported by references or documentation.",
+    "action": "Keep the entire product visible and use restrained callout lines or small insets to explain verified materials, construction, surface, attachment, or handling features.",
+    "condition": "New, clean, complete, undamaged, correctly proportioned, and free from packaging clutter."
+  },
+  "combination_logic": "Standalone product image: communicate one clear commercial purpose while preserving the full product and all verified facts.",
+  "product_information": "Product identifier: MF-DEMO-001",
+  "reference_image_policy": "Treat every reference image as a product-identity constraint, never as a composition template. Preserve exact product shape, count, color, material, construction, visible parts, and relative scale. Do not copy the source background, crop, camera angle, tabletop, wall, lighting, props, or layout. Create an original composition appropriate to the requested image type and never invent parts or functions.",
+  "diversity_plan": {
+    "scene_domain": "neutral-commercial",
+    "space_type": "shot-specific controlled setting",
+    "use_context": "full-product feature explanation",
+    "camera_angle": "selected for the requested information type",
+    "composition_family": "distinct from the other four image types",
+    "daylight_direction": "bright diffused commercial daylight",
+    "emotional_tone": "clear, factual, trustworthy"
+  },
+  "interaction_plan": {
+    "interaction_mode": "not required for this shot",
+    "completed_state": "preserve complete, stable, physically credible product presentation"
+  },
+  "environment": "Bright, clean daytime environment appropriate to the verified product use; soft neutral background and restrained supporting props.",
+  "composition": "Stable square composition with the complete product fully inside frame, generous safe margins, no cropped edges, no overlap that hides included parts.",
+  "camera": {
+    "focal_length": "50-70mm equivalent",
+    "aperture": "f/8",
+    "angle": "clear three-quarter or straight-on product-readable angle"
+  },
+  "lighting": "Bright diffused daylight with soft commercial fill, accurate reflections, controlled highlights, and clearly separated edges.",
+  "color_grade": "Neutral, bright, realistic e-commerce grade with clean whites and restrained saturation.",
+  "style": "full-product feature explanation",
+  "quality": "High-resolution photorealistic e-commerce image, accurate geometry, legible information, crisp but natural materials.",
+  "negatives": "Bright daytime environment only. Show the complete product. No night, dusk, low light, children, people who appear underage, wall plugs, certification marks, voltage claims, wireless symbols, Bluetooth symbols, environmental claims, waterproof claims, brand logos, copyrighted characters, unrelated props, distorted geometry, invented functions, unreadable decorative text, Chinese text, or any visible non-English wording. Every visible word must use natural US English.",
+  "text": {
+    "Content": "US marketplace language policy: every visible headline, caption, dimension label, feature callout, comparison heading, icon label, and supporting word must be written in concise, natural US English. Never render Chinese source wording, bilingual text, pinyin, placeholder copy, garbled characters, or machine-like literal translations. Chinese product information is internal evidence only. Convert only verified facts into short idiomatic English labels; omit any fact that cannot be translated confidently. Use only short factual feature labels supported by the supplied information.",
+    "Position": "Use a quiet top or side information zone without covering either product.",
+    "font_style": "Clean sans-serif",
+    "font_color": "High-contrast neutral charcoal with one restrained accent color",
+    "font_size": "Large enough to read at marketplace thumbnail scale, with limited word count",
+    "Effects": "Thin guide lines and subtle solid backing only; no glow, dramatic shadow, badge, leaf icon, or certification-like symbol."
+  }
+}
+```
+
+5.
+```json
+{
+  "filename": "MF-DEMO-001-standalone-comparison",
+  "shot": "1:1 aspect ratio",
+  "subject": {
+    "item": "MF-DEMO-001, shown completely and matching all supplied references. It is the sole visual hero; preserve its verified count, dimensions, color, shape, material, and construction.",
+    "colors": "Match reference colors exactly with natural commercial color accuracy.",
+    "materials": "Show only materials and finishes supported by references or documentation.",
+    "action": "Keep the complete product visible and compare verified states, use cases, arrangement options, included quantity, or before-and-after presentation without attacking another product.",
+    "condition": "New, clean, complete, undamaged, correctly proportioned, and free from packaging clutter."
+  },
+  "combination_logic": "Standalone product image: communicate one clear commercial purpose while preserving the full product and all verified facts.",
+  "product_information": "Product identifier: MF-DEMO-001",
+  "reference_image_policy": "Treat every reference image as a product-identity constraint, never as a composition template. Preserve exact product shape, count, color, material, construction, visible parts, and relative scale. Do not copy the source background, crop, camera angle, tabletop, wall, lighting, props, or layout. Create an original composition appropriate to the requested image type and never invent parts or functions.",
+  "diversity_plan": {
+    "scene_domain": "neutral-commercial",
+    "space_type": "shot-specific controlled setting",
+    "use_context": "ordered comparison infographic",
+    "camera_angle": "selected for the requested information type",
+    "composition_family": "distinct from the other four image types",
+    "daylight_direction": "bright diffused commercial daylight",
+    "emotional_tone": "clear, factual, trustworthy"
+  },
+  "interaction_plan": {
+    "interaction_mode": "not required for this shot",
+    "completed_state": "preserve complete, stable, physically credible product presentation"
+  },
+  "environment": "Bright, clean daytime environment appropriate to the verified product use; soft neutral background and restrained supporting props.",
+  "composition": "Stable square composition with the complete product fully inside frame, generous safe margins, no cropped edges, no overlap that hides included parts.",
+  "camera": {
+    "focal_length": "50-70mm equivalent",
+    "aperture": "f/8",
+    "angle": "clear three-quarter or straight-on product-readable angle"
+  },
+  "lighting": "Bright diffused daylight with soft commercial fill, accurate reflections, controlled highlights, and clearly separated edges.",
+  "color_grade": "Neutral, bright, realistic e-commerce grade with clean whites and restrained saturation.",
+  "style": "ordered comparison infographic",
+  "quality": "High-resolution photorealistic e-commerce image, accurate geometry, legible information, crisp but natural materials.",
+  "negatives": "Bright daytime environment only. Show the complete product. No night, dusk, low light, children, people who appear underage, wall plugs, certification marks, voltage claims, wireless symbols, Bluetooth symbols, environmental claims, waterproof claims, brand logos, copyrighted characters, unrelated props, distorted geometry, invented functions, unreadable decorative text, Chinese text, or any visible non-English wording. Every visible word must use natural US English.",
+  "text": {
+    "Content": "US marketplace language policy: every visible headline, caption, dimension label, feature callout, comparison heading, icon label, and supporting word must be written in concise, natural US English. Never render Chinese source wording, bilingual text, pinyin, placeholder copy, garbled characters, or machine-like literal translations. Chinese product information is internal evidence only. Convert only verified facts into short idiomatic English labels; omit any fact that cannot be translated confidently. Use short neutral comparison headings and only factual labels supported by supplied information.",
+    "Position": "Use a quiet top or side information zone without covering either product.",
+    "font_style": "Clean sans-serif",
+    "font_color": "High-contrast neutral charcoal with one restrained accent color",
+    "font_size": "Large enough to read at marketplace thumbnail scale, with limited word count",
+    "Effects": "Thin guide lines and subtle solid backing only; no glow, dramatic shadow, badge, leaf icon, or certification-like symbol."
+  }
+}
+```

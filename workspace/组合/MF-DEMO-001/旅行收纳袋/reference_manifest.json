@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "task": "旅行收纳袋",
+  "references": [
+    {
+      "filename": "主商品-01.png",
+      "role": "main_product_identity",
+      "source": "原始商品图/MF-DEMO-001/主商品.png",
+      "reason": "完整轮廓、颜色、泵头结构和底座清晰可见。",
+      "selected_for": ["main", "size", "lifestyle-scene", "detail", "comparison"],
+      "limitations": ["不能证明尺寸、容量、材质或性能"]
+    },
+    {
+      "filename": "配件-01.png",
+      "role": "accessory_identity",
+      "source": "配件超市/旅行收纳袋/配件参考-v2.png",
+      "reason": "无品牌收纳袋全貌、抽绳结构、颜色和面料纹理清晰。",
+      "selected_for": ["main", "size", "lifestyle-scene", "detail", "comparison"],
+      "limitations": ["不能证明与主商品存在尺寸兼容、安装或连接关系"]
+    }
+  ]
+}

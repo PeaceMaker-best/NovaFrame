@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "task": "单品",
+  "references": [
+    {
+      "filename": "主商品-01.png",
+      "role": "main_product_identity",
+      "source": "原始商品图/MF-DEMO-001/主商品.png",
+      "reason": "完整轮廓、颜色、泵头结构和稳定底座清晰可见；用于锁定演示商品身份。",
+      "selected_for": ["main", "size", "lifestyle-scene", "detail", "comparison"],
+      "limitations": ["示意图不能证明准确尺寸、容量、材质或性能"]
+    }
+  ]
+}

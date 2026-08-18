@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Image Prompt Workflow"
+  short_description: "Prepare standalone and accessory image prompts only"
+  default_prompt: "Use $generate-product-images to scan product sources and prepare all standalone and accessory-combination prompt files without calling the image API."

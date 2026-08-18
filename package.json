@@ -1,0 +1,39 @@
+{
+  "name": "novaframe-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,ui -c cyan,green \"npm:dev:api\" \"npm:dev:ui\"",
+    "dev:ui": "vite --port 33020",
+    "dev:api": ".venv/bin/python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 38120",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 33020",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit --incremental false && tsc -p tsconfig.node.json --noEmit",
+    "test:frontend": "node --test tests/*.test.mjs",
+    "test:backend": ".venv/bin/python -m pytest backend/tests -q",
+    "verify": "npm run typecheck && npm run build && npm run test:frontend && npm run test:backend"
+  },
+  "dependencies": {
+    "konva": "^9.3.18",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-konva": "^19.0.10",
+    "react-router": "8.3.0",
+    "use-image": "^1.1.4",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4"
+  }
+}
