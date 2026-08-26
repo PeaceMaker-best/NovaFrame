@@ -33,6 +33,8 @@ MAX_GENERATION_INPUT_FILES = 500
 MAX_GENERATION_INPUT_FILE_BYTES = 64 * 1024 * 1024
 MAX_GENERATION_INPUT_TOTAL_BYTES = 512 * 1024 * 1024
 MAX_GENERATION_SNAPSHOT_JSON_BYTES = 192 * 1024
+MAX_SUBMITTED_REFERENCE_FILES = 3
+MAX_SUBMITTED_REFERENCE_FILE_BYTES = 12 * 1024 * 1024
 CREATIVE_BRIEF_POSITIVE_BLOCKLIST = (
     r"\b(?:wireless|bluetooth|fcc|phone\s+control)\b",
     r"\b(?:power\s+adapter|adapter|high\s+voltage)\b",
@@ -640,6 +642,7 @@ class WorkflowRunner:
         *,
         run_dir: Path,
         product: str,
+        submitted_references: Any = None,
     ) -> dict[str, Path]:
         """Copy verified bytes into a run-owned execution bundle."""
         self.verify_generation_inputs(snapshot)
@@ -653,6 +656,7 @@ class WorkflowRunner:
         ).resolve()
         workspace_bundle = stage / "workspace"
         workflow_bundle = stage / "workflow"
+        submitted_bundle = stage / "submitted-references"
         try:
             for folder in (
                 workspace_bundle / "原始商品图" / validated_product,
@@ -702,6 +706,66 @@ class WorkflowRunner:
                             f"Queued input changed while copying: {relative_path}"
                         )
 
+            references = submitted_references or []
+            if not isinstance(references, list) or len(references) > MAX_SUBMITTED_REFERENCE_FILES:
+                raise WorkflowValidationError("Submitted generation references are invalid")
+            submitted_source = (run_dir / "submitted-references").resolve()
+            if references:
+                if (run_dir / "submitted-references").is_symlink() or not submitted_source.is_dir():
+                    raise WorkflowValidationError("Submitted generation references are missing")
+                submitted_bundle.mkdir(parents=True, exist_ok=False)
+            for index, descriptor in enumerate(references):
+                if not isinstance(descriptor, dict):
+                    raise WorkflowValidationError(
+                        f"Submitted generation reference {index + 1} is invalid"
+                    )
+                filename = descriptor.get("filename")
+                expected_size = descriptor.get("size_bytes")
+                expected_sha256 = descriptor.get("sha256")
+                if (
+                    not isinstance(filename, str)
+                    or not filename
+                    or Path(filename).name != filename
+                    or Path(filename).suffix.casefold() not in REFERENCE_IMAGE_SUFFIXES
+                    or type(expected_size) is not int
+                    or not 0 < expected_size <= MAX_SUBMITTED_REFERENCE_FILE_BYTES
+                    or not isinstance(expected_sha256, str)
+                    or len(expected_sha256) != 64
+                ):
+                    raise WorkflowValidationError(
+                        f"Submitted generation reference {index + 1} has invalid metadata"
+                    )
+                unresolved_source = submitted_source / filename
+                if unresolved_source.is_symlink():
+                    raise WorkflowValidationError(
+                        f"Submitted generation reference changed: {filename}"
+                    )
+                source = unresolved_source.resolve()
+                destination = (submitted_bundle / filename).resolve()
+                try:
+                    source.relative_to(submitted_source)
+                    destination.relative_to(submitted_bundle.resolve())
+                except ValueError as exc:
+                    raise WorkflowValidationError(
+                        "Submitted generation reference escaped its input directory"
+                    ) from exc
+                if (
+                    not source.is_file()
+                    or source.stat().st_size != expected_size
+                    or self._sha256(source) != expected_sha256
+                ):
+                    raise WorkflowValidationError(
+                        f"Submitted generation reference changed: {filename}"
+                    )
+                shutil.copyfile(source, destination, follow_symlinks=False)
+                if (
+                    destination.stat().st_size != expected_size
+                    or self._sha256(destination) != expected_sha256
+                ):
+                    raise WorkflowValidationError(
+                        f"Submitted generation reference changed while copying: {filename}"
+                    )
+
             self.verify_generation_inputs(
                 snapshot,
                 workspace_root=workspace_bundle,
@@ -714,6 +778,7 @@ class WorkflowRunner:
 
         workspace_bundle = bundle_root / "workspace"
         workflow_bundle = bundle_root / "workflow"
+        submitted_bundle = bundle_root / "submitted-references"
         for path in bundle_root.rglob("*"):
             if path.is_file():
                 path.chmod(0o444)
@@ -726,10 +791,14 @@ class WorkflowRunner:
         # The provider compatibility layer writes an append-only cost log here.
         (workspace_bundle / ".tmp").chmod(0o700)
         workspace_bundle.chmod(0o755)
+        submitted_source = run_dir / "submitted-references"
+        if submitted_source.is_dir():
+            shutil.rmtree(submitted_source)
         return {
             "root": bundle_root,
             "workspace": workspace_bundle,
             "workflow": workflow_bundle,
+            "submitted_references": submitted_bundle,
         }
 
     @staticmethod
@@ -961,6 +1030,7 @@ class WorkflowRunner:
             input_snapshot,
             run_dir=run_dir,
             product=str(request.get("product") or ""),
+            submitted_references=request.get("submitted_references"),
         )
         bundled_workflow = (
             execution_bundle["workflow"] / self.settings.workflow_script.name
@@ -998,6 +1068,17 @@ class WorkflowRunner:
             "variants": int(request.get("variants") or 1),
             "concurrency": int(request.get("concurrency") or 1),
             "creative_brief": dict(request.get("creative_brief") or {}),
+            "submitted_references": [
+                {
+                    **dict(reference),
+                    "path": (
+                        execution_bundle["submitted_references"]
+                        / str(reference.get("filename") or "")
+                    ).relative_to(run_dir).as_posix(),
+                }
+                for reference in (request.get("submitted_references") or [])
+                if isinstance(reference, dict)
+            ],
             "provider": dict(request.get("provider") or {}),
             "input_snapshot": input_snapshot,
             "execution_bundle": {
@@ -1005,6 +1086,9 @@ class WorkflowRunner:
                 .relative_to(run_dir)
                 .as_posix(),
                 "workflow": execution_bundle["workflow"]
+                .relative_to(run_dir)
+                .as_posix(),
+                "submitted_references": execution_bundle["submitted_references"]
                 .relative_to(run_dir)
                 .as_posix(),
                 "source_digest": input_snapshot.get("digest"),
@@ -1027,6 +1111,7 @@ class WorkflowRunner:
                 "run_id": job_id,
                 "spec": run_spec_path.relative_to(workspace_root).as_posix(),
                 "creative_brief_applied": any(run_spec["creative_brief"].values()),
+                "submitted_reference_count": len(run_spec["submitted_references"]),
                 "provider": run_spec["provider"],
                 "input_snapshot_digest": run_spec["input_snapshot"].get("digest"),
                 "execution_bundle": run_spec["execution_bundle"],

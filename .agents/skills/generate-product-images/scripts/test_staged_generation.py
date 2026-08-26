@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -67,6 +68,51 @@ def test_canvas_creative_brief_rejects_positive_claims_but_allows_exclusions() -
         {"negatives": "No waterproof claims or certification badges."},
     )
     assert "No waterproof claims" in compiled["negatives"]
+
+
+def test_submitted_references_are_validated_and_merged_with_identity_anchors(
+    tmp_path: Path,
+) -> None:
+    run_dir = (tmp_path / "runs" / "run-reference").resolve()
+    submitted_dir = run_dir / "input-bundle" / "submitted-references"
+    submitted_dir.mkdir(parents=True)
+    submitted = submitted_dir / "reference-01.png"
+    submitted.write_bytes(b"submitted-reference")
+    descriptor = {
+        "path": "input-bundle/submitted-references/reference-01.png",
+        "size_bytes": submitted.stat().st_size,
+        "sha256": hashlib.sha256(submitted.read_bytes()).hexdigest(),
+    }
+    run = workflow.MuseForgeRunConfig(
+        run_id="run-reference",
+        run_dir=run_dir,
+        variants=1,
+    )
+
+    validated = workflow.museforge_submitted_reference_images(
+        {"submitted_references": [descriptor]},
+        run,
+    )
+    assert validated == [submitted]
+
+    main = tmp_path / "主商品-01.png"
+    accessory = tmp_path / "配件-01.png"
+    extra = tmp_path / "主商品-02.png"
+    for path in (main, accessory, extra):
+        path.write_bytes(path.name.encode())
+    merged = workflow.generation_reference_images(
+        [main, accessory, extra],
+        validated,
+        combo=True,
+    )
+    assert merged[:3] == [main, accessory, submitted]
+
+    bad = dict(descriptor, sha256="0" * 64)
+    with pytest.raises(ValueError, match="changed"):
+        workflow.museforge_submitted_reference_images(
+            {"submitted_references": [bad]},
+            run,
+        )
 
 
 def test_request_image_uses_part_file_and_atomic_replace(tmp_path: Path, monkeypatch) -> None:

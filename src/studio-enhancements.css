@@ -331,6 +331,85 @@
   font-size: 12px;
 }
 
+.studio-page .submitted-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.studio-page .submitted-reference-card,
+.studio-page .submitted-reference-upload {
+  position: relative;
+  min-height: 82px;
+  overflow: hidden;
+  background: #f4f4ef;
+  border: 1px solid #d9dcd5;
+  border-radius: 10px;
+}
+
+.studio-page .submitted-reference-card img {
+  width: 100%;
+  height: 82px;
+  object-fit: cover;
+}
+
+.studio-page .submitted-reference-card > span {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 3px 6px;
+  color: #fff;
+  background: rgba(25, 35, 30, .75);
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.studio-page .submitted-reference-card > button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: #fff;
+  background: rgba(70, 39, 35, .76);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.studio-page .submitted-reference-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #557067;
+  background: #f5f8f4;
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.studio-page .submitted-reference-upload:hover {
+  color: #176b60;
+  background: #f0f7f2;
+  border-color: #91b9ad;
+}
+
+.studio-page .submitted-reference-upload > span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.studio-page .submitted-reference-upload > small {
+  color: #8a918b;
+  font-size: 10px;
+}
+
+.studio-page .submitted-reference-upload input { display: none; }
+
 .studio-page .prompt-fields textarea:disabled {
   color: #66706a;
   background: #eef2ef;

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import json
 import os
 import sqlite3
@@ -41,6 +42,8 @@ from .workspace import (
 
 CANVAS_DOCUMENT_MAX_BYTES = 2 * 1024 * 1024
 WORKSPACE_IMPORT_MAX_BYTES = 12 * 1024 * 1024
+GENERATION_REFERENCE_MAX_BYTES = 12 * 1024 * 1024
+GENERATION_REFERENCE_MAX_COUNT = 3
 CANDIDATE_LIST_MAX_LIMIT = 500
 CANDIDATE_JOB_LIST_MAX_LIMIT = 3000
 JOB_STATUSES = {"queued", "running", "completed", "failed"}
@@ -144,6 +147,35 @@ class GenerationRunItem(BaseModel):
             raise ValueError(str(exc)) from exc
 
 
+class GenerationReferenceImage(BaseModel):
+    """One browser-submitted image used only by the generation run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    filename: str = Field(min_length=1, max_length=180)
+    data_url: str = Field(min_length=1, max_length=17 * 1024 * 1024)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_data_url(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "dataUrl" in value and "data_url" not in value:
+            normalized = dict(value)
+            normalized["data_url"] = normalized.pop("dataUrl")
+            return normalized
+        return value
+
+    @field_validator("filename")
+    @classmethod
+    def validate_filename(cls, value: str) -> str:
+        if value != value.strip() or FileSystemPath(value).name != value:
+            raise ValueError("filename must be one ordinary file name")
+        if any(ord(character) < 32 or ord(character) == 127 for character in value):
+            raise ValueError("filename contains control characters")
+        if FileSystemPath(value).suffix.casefold() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            raise ValueError("filename must use PNG, JPG, or WebP")
+        return value
+
+
 class GenerationRunRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -154,6 +186,10 @@ class GenerationRunRequest(BaseModel):
     variants: int = Field(default=4, ge=1, le=6)
     concurrency: int = Field(default=4, ge=1, le=10)
     creative_brief: GenerationCreativeBrief | None = None
+    reference_images: list[GenerationReferenceImage] = Field(
+        default_factory=list,
+        max_length=GENERATION_REFERENCE_MAX_COUNT,
+    )
     provider_mode: Literal["default", "auto", "fixed"] = "default"
     provider_channel_id: str | None = Field(default=None, max_length=80)
     quality: Literal["low", "medium", "high"] = "low"
@@ -166,6 +202,7 @@ class GenerationRunRequest(BaseModel):
             normalized = dict(value)
             camel_case_fields = {
                 "creativeBrief": "creative_brief",
+                "referenceImages": "reference_images",
                 "providerMode": "provider_mode",
                 "providerChannelId": "provider_channel_id",
             }
@@ -389,6 +426,100 @@ class WorkspaceAssetImport(BaseModel):
         if FileSystemPath(value).suffix.casefold() not in IMAGE_SUFFIXES:
             raise ValueError("filename must use a supported image extension")
         return value
+
+
+def _decode_generation_references(
+    images: list[GenerationReferenceImage],
+) -> list[tuple[dict[str, Any], bytes]]:
+    mime_suffixes = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }
+    decoded: list[tuple[dict[str, Any], bytes]] = []
+    for index, image in enumerate(images, start=1):
+        header, separator, encoded = image.data_url.partition(",")
+        if separator != "," or not header.startswith("data:image/") or ";base64" not in header:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Reference image {index} must be a base64 image data URL",
+            )
+        mime_type = header[5:].split(";", 1)[0].casefold()
+        suffix = mime_suffixes.get(mime_type)
+        if suffix is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Reference image {index} must be PNG, JPG, or WebP",
+            )
+        try:
+            content = base64.b64decode(encoded, validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Reference image {index} data is invalid",
+            ) from exc
+        if not content:
+            raise HTTPException(status_code=422, detail=f"Reference image {index} is empty")
+        if len(content) > GENERATION_REFERENCE_MAX_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Reference image {index} exceeds 12 MiB",
+            )
+        signatures_match = (
+            mime_type == "image/png" and content.startswith(b"\x89PNG\r\n\x1a\n")
+        ) or (
+            mime_type == "image/jpeg" and content.startswith(b"\xff\xd8\xff")
+        ) or (
+            mime_type == "image/webp"
+            and len(content) >= 12
+            and content[:4] == b"RIFF"
+            and content[8:12] == b"WEBP"
+        )
+        if not signatures_match:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Reference image {index} content does not match its image type",
+            )
+        metadata = {
+            "display_name": image.filename,
+            "filename": f"reference-{index:02d}{suffix}",
+            "mime_type": mime_type,
+            "size_bytes": len(content),
+            "sha256": hashlib.sha256(content).hexdigest(),
+        }
+        decoded.append((metadata, content))
+    return decoded
+
+
+def _stage_generation_references(
+    settings: Settings,
+    *,
+    job_id: str,
+    references: list[tuple[dict[str, Any], bytes]],
+) -> None:
+    if not references:
+        return
+    runs_root = (settings.workspace_root / ".museforge" / "runs").resolve()
+    run_dir = (runs_root / job_id).resolve()
+    try:
+        run_dir.relative_to(runs_root)
+    except ValueError as exc:  # pragma: no cover - server-authored ids guard this
+        raise RuntimeError("Generation reference directory escaped runs root") from exc
+    if run_dir.exists():
+        raise RuntimeError("Generation run directory already exists")
+    reference_dir = run_dir / "submitted-references"
+    reference_dir.mkdir(parents=True, exist_ok=False)
+    try:
+        for metadata, content in references:
+            destination = reference_dir / str(metadata["filename"])
+            temporary = destination.with_suffix(destination.suffix + ".part")
+            temporary.write_bytes(content)
+            os.replace(temporary, destination)
+    except Exception:
+        import shutil
+
+        shutil.rmtree(run_dir, ignore_errors=True)
+        raise
 
 
 def _cors_origins() -> list[str]:
@@ -826,7 +957,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         runner: WorkflowRunner = request.app.state.workflow_runner
         repository: Repository = request.app.state.repository
         provider_service: ProviderService = request.app.state.provider_service
-        normalized = payload.model_dump()
+        decoded_references = _decode_generation_references(payload.reference_images)
+        normalized = payload.model_dump(exclude={"reference_images"})
+        normalized["submitted_references"] = [
+            metadata for metadata, _content in decoded_references
+        ]
         exact_item_count = (
             len(payload.items)
             if payload.items
@@ -869,6 +1004,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         except GenerationQueueFullError as exc:
             raise _generation_queue_full_error(current) from exc
+        try:
+            _stage_generation_references(
+                current,
+                job_id=run["id"],
+                references=decoded_references,
+            )
+        except (OSError, RuntimeError) as exc:
+            repository.fail_unfinished_items(run["id"], str(exc))
+            repository.finish_job(
+                run["id"],
+                status="failed",
+                message="无法保存本次参考图",
+                stderr=str(exc),
+            )
+            raise HTTPException(status_code=500, detail="无法保存本次参考图") from exc
         executor: ThreadPoolExecutor = request.app.state.generation_executor
 
         def submit() -> None:

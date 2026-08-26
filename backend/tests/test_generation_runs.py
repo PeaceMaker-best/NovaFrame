@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import sqlite3
@@ -893,6 +894,74 @@ def test_api_runs_bundled_workflow_against_local_image_provider(
         assert b"local-image-contract-test" in request["body"]
         assert b"LOCAL CONTRACT TEST centered composition." in request["body"]
         assert b"mutated-after-first-provider-call" not in request["body"]
+
+
+def test_generation_run_snapshots_browser_submitted_references(tmp_path: Path) -> None:
+    root, script = _workspace(tmp_path, script_body=FAKE_GENERATOR)
+    settings = _settings(tmp_path, root, script, enabled=True)
+    image_bytes = b"\x89PNG\r\n\x1a\nrun-only-reference"
+    data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode("ascii")
+
+    with TestClient(create_app(settings), base_url="http://127.0.0.1") as client:
+        invalid = client.post(
+            "/api/generation-runs",
+            json={
+                "product": "SKU-1",
+                "tasks": ["单品"],
+                "shots": ["main"],
+                "referenceImages": [
+                    {
+                        "filename": "fake.png",
+                        "dataUrl": "data:image/png;base64,ZmFrZQ==",
+                    }
+                ],
+            },
+        )
+        assert invalid.status_code == 422
+        assert "does not match" in invalid.json()["detail"]
+
+        response = client.post(
+            "/api/generation-runs",
+            json={
+                "product": "SKU-1",
+                "tasks": ["单品"],
+                "shots": ["main"],
+                "variants": 1,
+                "concurrency": 1,
+                "creativeBrief": {"composition": "Match the supplied visual reference."},
+                "referenceImages": [
+                    {"filename": "visual-reference.png", "dataUrl": data_url}
+                ],
+            },
+        )
+        assert response.status_code == 202
+        queued = response.json()
+        run = _wait_for_run(client, queued["id"])
+        assert run["status"] == "completed", run
+
+        listing = client.get("/api/generation-runs").json()["items"][0]
+        persisted_request = listing["request"]
+        assert "reference_images" not in persisted_request
+        assert "data_url" not in json.dumps(persisted_request)
+        assert persisted_request["submitted_references"][0]["display_name"] == "visual-reference.png"
+
+        run_dir = root / ".museforge" / "runs" / queued["id"]
+        run_spec = json.loads((run_dir / "run-spec.json").read_text(encoding="utf-8"))
+        assert run_spec["submitted_references"][0]["path"] == (
+            "input-bundle/submitted-references/reference-01.png"
+        )
+        assert (
+            run_dir
+            / "input-bundle"
+            / "submitted-references"
+            / "reference-01.png"
+        ).read_bytes() == image_bytes
+        assert not (run_dir / "submitted-references").exists()
+        assert any(
+            event["type"] == "run.started"
+            and event["payload"]["submitted_reference_count"] == 1
+            for event in run["events"]
+        )
 
 
 def test_background_run_candidate_review_and_delete_round_trip(tmp_path: Path) -> None:

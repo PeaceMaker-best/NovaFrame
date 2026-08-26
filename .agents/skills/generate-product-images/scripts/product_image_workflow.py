@@ -34,6 +34,8 @@ MUSEFORGE_EVENT_PREFIX = "MUSEFORGE_EVENT "
 MUSEFORGE_RUN_SPEC_SCHEMA = "museforge.run-spec"
 MUSEFORGE_RUN_SPEC_VERSIONS = {1, 2}
 MUSEFORGE_RUN_SPEC_MAX_BYTES = 256 * 1024
+MUSEFORGE_SUBMITTED_REFERENCE_LIMIT = 3
+MUSEFORGE_SUBMITTED_REFERENCE_MAX_BYTES = 12 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -836,6 +838,70 @@ def museforge_run_items(run_spec: dict[str, Any]) -> set[tuple[str, str]] | None
     return items
 
 
+def museforge_submitted_reference_images(
+    run_spec: dict[str, Any],
+    run: MuseForgeRunConfig,
+) -> list[Path]:
+    """Validate browser-submitted references inside the immutable run bundle."""
+    raw_references = run_spec.get("submitted_references", [])
+    if not isinstance(raw_references, list):
+        raise ValueError("MuseForge submitted references must be a list")
+    if len(raw_references) > MUSEFORGE_SUBMITTED_REFERENCE_LIMIT:
+        raise ValueError("MuseForge submitted references exceed the per-run limit")
+    if not raw_references:
+        return []
+    if run.run_dir is None:
+        raise ValueError("MuseForge submitted references require a staged run")
+    allowed_root = (run.run_dir / "input-bundle" / "submitted-references").resolve()
+    references: list[Path] = []
+    for index, descriptor in enumerate(raw_references):
+        if not isinstance(descriptor, dict):
+            raise ValueError(f"MuseForge submitted reference {index + 1} is invalid")
+        raw_path = descriptor.get("path")
+        expected_size = descriptor.get("size_bytes")
+        expected_sha256 = descriptor.get("sha256")
+        if (
+            not isinstance(raw_path, str)
+            or not raw_path
+            or Path(raw_path).is_absolute()
+            or type(expected_size) is not int
+            or not 0 < expected_size <= MUSEFORGE_SUBMITTED_REFERENCE_MAX_BYTES
+            or not isinstance(expected_sha256, str)
+            or len(expected_sha256) != 64
+        ):
+            raise ValueError(f"MuseForge submitted reference {index + 1} has invalid metadata")
+        path = (run.run_dir / raw_path).resolve()
+        try:
+            path.relative_to(allowed_root)
+        except ValueError as exc:
+            raise ValueError("MuseForge submitted reference escaped its input bundle") from exc
+        if (
+            not path.is_file()
+            or path.suffix.casefold() not in IMAGE_SUFFIXES
+            or path.stat().st_size != expected_size
+            or file_sha256(path) != expected_sha256
+        ):
+            raise ValueError(f"MuseForge submitted reference changed: {path.name}")
+        references.append(path)
+    return references
+
+
+def generation_reference_images(
+    curated: list[Path],
+    submitted: list[Path],
+    *,
+    combo: bool,
+) -> list[Path]:
+    """Keep verified identity anchors while prioritizing all run-submitted references."""
+    if not submitted:
+        return curated
+    main_anchor = next((path for path in curated if path.name.startswith("主商品-")), None)
+    accessory_anchor = next((path for path in curated if path.name.startswith("配件-")), None)
+    required = [path for path in (main_anchor, accessory_anchor if combo else None) if path]
+    remaining = [path for path in curated if path not in required]
+    return list(dict.fromkeys([*required, *submitted, *remaining]))[:5]
+
+
 def apply_canvas_creative_brief(
     prompt: dict[str, Any],
     brief: dict[str, Any],
@@ -1017,6 +1083,7 @@ def collect_jobs(
     creative_brief = run_spec.get("creative_brief", {})
     if not isinstance(creative_brief, dict):
         raise ValueError("MuseForge creative brief must be an object")
+    submitted_references = museforge_submitted_reference_images(run_spec, run) if run_spec else []
     requested = set(selected_tasks or [])
     requested_shots = set(selected_shots or [])
     for product_dir in product_dirs:
@@ -1078,10 +1145,11 @@ def collect_jobs(
                 ]
                 if not pending_targets:
                     continue
-                refs = curated_reference_images(
-                    job_dir,
-                    combo=not is_standalone_task(job_dir.name),
-                    shot=shot,
+                combo = not is_standalone_task(job_dir.name)
+                refs = generation_reference_images(
+                    curated_reference_images(job_dir, combo=combo, shot=shot),
+                    submitted_references,
+                    combo=combo,
                 )
                 for candidate_index, target in pending_targets:
                     jobs.append(GenerationJob(

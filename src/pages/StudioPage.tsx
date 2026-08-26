@@ -44,8 +44,12 @@ import { ARTBOARD, StudioCanvas, type CanvasViewport, type StudioCanvasHandle } 
 import { createGenerationRun, getProviderConfig, importWorkspaceAsset, listCandidates, loadCanvas, previewWorkflow, saveCanvas } from '../lib/api'
 import { resolveProviderEstimate } from '../lib/providerRouting'
 import { useAppStore } from '../store/appStore'
-import type { AssetItem, CanvasNode, PromptDraft, ProviderConfig, ProviderQuality, ShotType } from '../types'
+import type { AssetItem, CanvasNode, GenerationReferenceImageInput, PromptDraft, ProviderConfig, ProviderQuality, ShotType } from '../types'
 import '../studio-enhancements.css'
+
+const MAX_SUBMITTED_REFERENCES = 3
+const MAX_SUBMITTED_REFERENCE_BYTES = 12 * 1024 * 1024
+const SUPPORTED_REFERENCE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 const shotOptions: Array<{ id: ShotType; label: string; short: string }> = [
   { id: 'main', label: '主图', short: 'MAIN' },
@@ -96,6 +100,12 @@ type GenerationContext = {
   providerChoice: string
   providerConfig?: ProviderConfig
   quality: ProviderQuality
+  referenceImages: PendingReferenceImage[]
+}
+
+type PendingReferenceImage = GenerationReferenceImageInput & {
+  id: string
+  size: number
 }
 
 type CachedCanvas = {
@@ -121,6 +131,15 @@ function cloneProviderConfig(config: ProviderConfig | undefined): ProviderConfig
     routing: { ...config.routing },
     summary: { ...config.summary },
   }
+}
+
+function readImageDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error(`无法读取参考图：${file.name}`))
+    reader.readAsDataURL(file)
+  })
 }
 
 function readCanvasCache(id: string): CachedCanvas | undefined {
@@ -306,6 +325,9 @@ function Inspector({
   setPrompt,
   referenceAssets,
   referenceCount,
+  submittedReferences,
+  onAddReferences,
+  onRemoveReference,
   variants,
   setVariants,
   providerConfig,
@@ -329,6 +351,9 @@ function Inspector({
   setPrompt: (value: PromptDraft) => void
   referenceAssets: AssetItem[]
   referenceCount: number
+  submittedReferences: PendingReferenceImage[]
+  onAddReferences: (files: FileList | null) => void
+  onRemoveReference: (id: string) => void
   variants: number
   setVariants: (value: number) => void
   providerConfig?: ProviderConfig
@@ -376,6 +401,28 @@ function Inspector({
               {referenceAssets.map((asset, index) => <div key={asset.id}><img src={asset.url} alt={asset.name} /><span>{index === 0 ? '身份锚点' : `参考 ${index + 1}`}</span></div>)}
             </div> : <div className="reference-empty"><CircleAlert size={16} />当前任务没有已发布参考图</div>}
             <p className="helper-copy"><LockKeyhole size={12} />来源：任务目录 reference_manifest.json；画布不会复制图片数据。</p>
+          </div>
+
+          <div className="inspector-section submitted-reference-section">
+            <div className="section-heading"><span>本次参考图</span><small>{submittedReferences.length} / {MAX_SUBMITTED_REFERENCES}</small></div>
+            <div className="submitted-reference-grid">
+              {submittedReferences.map((reference, index) => (
+                <div className="submitted-reference-card" key={reference.id}>
+                  <img src={reference.dataUrl} alt={reference.filename} />
+                  <span>临时参考 {index + 1}</span>
+                  <button type="button" onClick={() => onRemoveReference(reference.id)} disabled={generating} aria-label={`移除 ${reference.filename}`}><Trash2 size={13} /></button>
+                </div>
+              ))}
+              {submittedReferences.length < MAX_SUBMITTED_REFERENCES && (
+                <label className="submitted-reference-upload">
+                  <ImagePlus size={19} />
+                  <span>添加图片</span>
+                  <small>PNG / JPG / WebP</small>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={generating} onChange={(event) => { onAddReferences(event.target.files); event.target.value = '' }} />
+                </label>
+              )}
+            </div>
+            <p className="helper-copy"><LockKeyhole size={12} />仅用于本次生成，会与文字指令一起进入运行快照，不写入素材库。</p>
           </div>
 
           <div className="inspector-section prompt-fields">
@@ -463,6 +510,7 @@ export function StudioPage() {
   const [providerConfig, setProviderConfig] = useState<ProviderConfig>()
   const [providerChoice, setProviderChoice] = useState('default')
   const [quality, setQuality] = useState<ProviderQuality>('low')
+  const [submittedReferences, setSubmittedReferences] = useState<PendingReferenceImage[]>([])
   const [preflightState, setPreflightState] = useState<'idle' | 'checking' | 'passed' | 'failed'>('idle')
   const [generating, setGenerating] = useState(false)
   const [resultAssets, setResultAssets] = useState<AssetItem[]>([])
@@ -526,6 +574,42 @@ export function StudioPage() {
     url: image.url,
     kind: 'reference',
   })), [selectedTaskRecord?.references])
+
+  const addSubmittedReferences = useCallback(async (files: FileList | null) => {
+    const selected = Array.from(files ?? [])
+    if (!selected.length) return
+    const invalidType = selected.find((file) => !SUPPORTED_REFERENCE_TYPES.has(file.type))
+    if (invalidType) {
+      notify({ title: '参考图格式不支持', detail: `${invalidType.name} 不是 PNG、JPG 或 WebP 图片`, tone: 'warning' })
+      return
+    }
+    const oversized = selected.find((file) => file.size > MAX_SUBMITTED_REFERENCE_BYTES)
+    if (oversized) {
+      notify({ title: '参考图太大', detail: `${oversized.name} 超过 12 MiB`, tone: 'warning' })
+      return
+    }
+    const available = MAX_SUBMITTED_REFERENCES - submittedReferences.length
+    if (available <= 0) return
+    const accepted = selected.slice(0, available)
+    try {
+      const additions = await Promise.all(accepted.map(async (file, index) => ({
+        id: `reference-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+        filename: file.name,
+        dataUrl: await readImageDataUrl(file),
+        size: file.size,
+      })))
+      setSubmittedReferences((current) => [...current, ...additions].slice(0, MAX_SUBMITTED_REFERENCES))
+      if (selected.length > accepted.length) {
+        notify({ title: '最多添加 3 张本次参考图', detail: '其余图片未加入本次生成', tone: 'neutral' })
+      }
+    } catch (error) {
+      notify({ title: '无法读取参考图', detail: error instanceof Error ? error.message : '请重新选择图片', tone: 'warning' })
+    }
+  }, [notify, submittedReferences.length])
+
+  const removeSubmittedReference = useCallback((id: string) => {
+    setSubmittedReferences((current) => current.filter((reference) => reference.id !== id))
+  }, [])
 
   useEffect(() => {
     if (!workspace || urlContextReady.current) return
@@ -1044,6 +1128,7 @@ export function StudioPage() {
       providerChoice,
       providerConfig: cloneProviderConfig(providerConfig),
       quality,
+      referenceImages: submittedReferences.map((reference) => ({ ...reference })),
     }
     const assertContextUnchanged = () => {
       const currentRevision = revisions.current.get(context.canvasId) ?? 0
@@ -1094,6 +1179,7 @@ export function StudioPage() {
           `渠道：${channelName}`,
           `质量：${qualityName}`,
           `候选数：${context.variants} 张`,
+          `本次参考图：${context.referenceImages.length} 张`,
           `费用：${costNotice}`,
           '',
           '确认继续？',
@@ -1120,12 +1206,14 @@ export function StudioPage() {
           variants: context.variants,
           concurrency: 1,
           creativeBrief: context.snapshot.prompt,
+          referenceImages: context.referenceImages.map(({ filename, dataUrl }) => ({ filename, dataUrl })),
           providerMode: context.providerChoice === 'default' ? 'default' : context.providerChoice === 'auto' ? 'auto' : 'fixed',
           providerChannelId: context.providerChoice !== 'default' && context.providerChoice !== 'auto' ? context.providerChoice : undefined,
           quality: context.quality,
           size: '1024x1024',
         })
         setActiveRunId(run.id)
+        setSubmittedReferences([])
         notify({ title: '已交给本地 Skill 执行', detail: `运行 ${run.id} · ${context.variants} 个候选 · ${run.provider?.channelName ?? channelName}`, tone: 'success' })
         navigate(`/queue?run=${encodeURIComponent(run.id)}`)
       } catch (error) {
@@ -1152,7 +1240,7 @@ export function StudioPage() {
       setGenerating(false)
     }, 500)
     window.setTimeout(() => updateJob(id, { status: 'succeeded', progress: 100, thumbnail: outputByShot[context.shot] }), 2200)
-  }, [addJob, apiOnline, canvasId, demoMode, generating, navigate, notify, persistCanvas, providerChoice, providerConfig, quality, saveState, selectedProduct, selectedProductRecord?.name, selectedShot, selectedTask, setActiveRunId, updateJob, variants, workspace?.liveGenerationEnabled])
+  }, [addJob, apiOnline, canvasId, demoMode, generating, navigate, notify, persistCanvas, providerChoice, providerConfig, quality, saveState, selectedProduct, selectedProductRecord?.name, selectedShot, selectedTask, setActiveRunId, submittedReferences, updateJob, variants, workspace?.liveGenerationEnabled])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1293,9 +1381,9 @@ export function StudioPage() {
           <div className="canvas-hint"><Grip size={13} />空白拖拽框选 · Shift 多选 · 自动吸附 · 方向键微移</div>
           <button className="queue-peek" onClick={() => navigate(activeRunId ? `/queue?run=${encodeURIComponent(activeRunId)}` : '/queue')}><span><i />{activeRunId ? `真实运行 ${activeRunId.slice(0, 8)} 已接入队列` : demoMode && jobs.filter((job) => job.status === 'running').length ? `${jobs.filter((job) => job.status === 'running').length} 个演示任务生成中` : '本地候选暂存已启用'}</span><strong>查看运行队列 <ChevronDown size={14} /></strong></button>
         </section>
-        <Inspector prompt={prompt} setPrompt={setPrompt} referenceAssets={referenceAssets} referenceCount={selectedTaskRecord?.referenceCount ?? 0} variants={variants} setVariants={setVariants} providerConfig={providerConfig} providerChoice={providerChoice} setProviderChoice={setProviderChoice} quality={quality} setQuality={setQuality} preflightState={preflightState} selectedNodes={selectedNodes} onUpdateSelected={updateSelected} onGenerate={() => { void generate() }} onPreflight={() => { void preflight() }} onAlign={alignSelected} onDistribute={distributeSelected} onLayerUp={() => primarySelectedId && moveLayer(primarySelectedId, 'up')} onLayerDown={() => primarySelectedId && moveLayer(primarySelectedId, 'down')} generating={generating} canvasVersion={canvasVersion} />
+        <Inspector prompt={prompt} setPrompt={setPrompt} referenceAssets={referenceAssets} referenceCount={selectedTaskRecord?.referenceCount ?? 0} submittedReferences={submittedReferences} onAddReferences={(files) => { void addSubmittedReferences(files) }} onRemoveReference={removeSubmittedReference} variants={variants} setVariants={setVariants} providerConfig={providerConfig} providerChoice={providerChoice} setProviderChoice={setProviderChoice} quality={quality} setQuality={setQuality} preflightState={preflightState} selectedNodes={selectedNodes} onUpdateSelected={updateSelected} onGenerate={() => { void generate() }} onPreflight={() => { void preflight() }} onAlign={alignSelected} onDistribute={distributeSelected} onLayerUp={() => primarySelectedId && moveLayer(primarySelectedId, 'up')} onLayerDown={() => primarySelectedId && moveLayer(primarySelectedId, 'down')} generating={generating} canvasVersion={canvasVersion} />
       </div>
-      <div className="studio-warning"><ScanSearch size={14} /><span>生成依据：任务 prompts.json + reference_manifest.json + 当前画布创意指令</span><strong>{selectedTaskRecord?.hasReferenceManifest ? '参考清单已发布' : '参考清单缺失'}</strong></div>
+      <div className="studio-warning"><ScanSearch size={14} /><span>生成依据：任务 Prompt + 已发布参考图 + 本次参考图与文字指令</span><strong>{submittedReferences.length ? `已添加 ${submittedReferences.length} 张临时参考` : selectedTaskRecord?.hasReferenceManifest ? '参考清单已发布' : '参考清单缺失'}</strong></div>
     </div>
   )
 }

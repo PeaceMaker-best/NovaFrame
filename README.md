@@ -50,6 +50,7 @@ The built-in e-commerce matrix covers:
 - Asynchronous generation runs backed by FastAPI and SQLite.
 - Structured workflow events and browser polling for real progress visibility.
 - Immutable per-run `run-spec.json` snapshots for canvas-authored creative direction.
+- Up to three browser-submitted PNG, JPG, or WebP references per run, combined with text direction and copied into the immutable input bundle without entering the formal asset library.
 - Run-level candidate staging under `workspace/.museforge/runs/`.
 - Four-up candidate review, multi-select keep, and confirmed cleanup of rejected images.
 - Atomic promotion of kept candidates into the formal `workspace/组合/` library.
@@ -75,6 +76,7 @@ The built-in e-commerce matrix covers:
 - A real retained-results shelf backed by promoted review candidates, plus stable workspace-backed local-image import.
 - Locked scene background and protected background properties.
 - Structured creative-brief editor whose environment, composition, visible text, and negative constraints are appended to the verified Skill prompt at run time.
+- Run-only reference-image picker with local preview and removal before paid generation; verified product and accessory identity anchors remain included when temporary references are used.
 - Independent documents for every `product + task + shot` combination.
 - Shareable `/studio?product=…&task=…&shot=…` context that restores the exact canvas.
 - SQLite autosave, session cache, offline recovery, serial save queues, and load-failure protection.

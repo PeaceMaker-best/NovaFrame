@@ -202,6 +202,11 @@ export interface GenerationRunItem {
   shot: ShotType
 }
 
+export interface GenerationReferenceImageInput {
+  filename: string
+  dataUrl: string
+}
+
 export interface GenerationRunRequest {
   product: string
   tasks: string[]
@@ -211,6 +216,8 @@ export interface GenerationRunRequest {
   variants: number
   concurrency: number
   creativeBrief?: PromptDraft
+  /** Ephemeral user references copied into this run's immutable input bundle. */
+  referenceImages?: GenerationReferenceImageInput[]
   providerMode?: ProviderSelectionMode
   providerChannelId?: string
   quality?: ProviderQuality
